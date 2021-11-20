@@ -5,8 +5,8 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 import re
-
-
+import pyautogui
+import time
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
@@ -37,37 +37,68 @@ def getText():
         
         # Cropping the text block for giving input to OCR
         cropped = im2[550:600, 780:845] #TODO change this to automatic
-        cv2.imshow('image',cropped)
+        #cv2.imshow('image',cropped)
         
         text = pytesseract.image_to_string(cropped)
         text = text.split("\n")[0]
         print(text)
         return text
+used = []
 
 def findWord(text):
-    link = r"https://www.thefreedictionary.com/words-that-end-in-" + text
+    global used
+    
+    link = r"https://wordfind.com/contains/" + text
     page = requests.get(link)
     soup = BeautifulSoup(page.content, 'html.parser')
-
-    res = soup.find("div", class_ = "TCont")
-    res = res.findAll('a', href=True)
-
-    #TODO check used word
     word = ""
     
-    while word == "":
-        w = res.pop(0).contents
-        w = str(w[0]) + str(w[1]).replace("<b>", "").replace("</b>","")
-        if text.lower() not in str(w).lower():
+    res = soup.findAll("li", class_ = "dl")
+
+    
+    while word == "" or word in used:
+        w = res.pop(0).find('a', href=True).contents[0]
+
+        if text.lower() not in str(w).lower() or w == '':
             continue
 
-        word = w
+        word = str(w)
+    used.append(word)
+    
     return word
 
-#main
 
+
+def typer(text):
+    window = "BombParty"
+    if window in pyautogui.getActiveWindow().title:
+        pyautogui.typewrite(text)
+        pyautogui.press("enter")
+         
+
+#main
+'''
 text = getText()
 
 if text.isalnum():
     print("word: ")
     print(findWord(text))
+'''
+
+
+while True:
+    inp = input("scan?")
+    if inp.strip() == '': 
+        text = getText()
+    else:
+        text = inp.strip().lower()
+        
+    if text.isalnum():
+        print("word: ")
+        word = findWord(text)
+        print("\t", word)
+        pyautogui.hotkey("alt","tab")
+        time.sleep(0.4)
+        print(used)
+        typer(word)
+    print()
