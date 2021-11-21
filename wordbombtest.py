@@ -68,15 +68,11 @@ def findWord(text):
     page = requests.get(link)
     soup = BeautifulSoup(page.content, 'html.parser')
     
-    
     res = soup.findAll("li", class_ = "dl")
 
     word = getWord(res, text)
     
-    used.append(word)
-    
     return res, word
-
 
 
 def typer(text):
@@ -85,13 +81,35 @@ def typer(text):
         pyautogui.typewrite(text)
         pyautogui.press("enter")
 
-def addCache(res, text):
+def checkCache(text):
     global cache
-    
+
     if text not in cache.keys():
         cache[text] = set()
+
+def addCache(res, text):
+    global cache
+
+    checkCache(text)
+    
     while res != []:
         cache[text].add(getWord(res,text))
+
+
+#common text
+common = ["pr", "is", "ish", "dec", "anc", "in", "on", "da", "ed"]
+
+def preCache(common):
+    global cache
+
+    for text in common:
+        res, word = findWord(text)
+        checkCache(text)
+        cache[text].add(word)
+        addCache(res, text)
+    
+
+preCache(common)
 
 #main
 
@@ -111,7 +129,9 @@ while True:
             res, word = findWord(text)
         else:
             word = cache[text].pop()
-        
+            
+        used.append(word)
+
         print("\t", word)
         pyautogui.hotkey("alt","tab")
         time.sleep(0.4)
