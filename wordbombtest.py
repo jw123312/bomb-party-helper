@@ -84,7 +84,14 @@ def typer(text):
     if window in pyautogui.getActiveWindow().title:
         pyautogui.typewrite(text)
         pyautogui.press("enter")
-         
+
+def addCache(res, text):
+    global cache
+    
+    if text not in cache.keys():
+        cache[text] = set()
+    while res != []:
+        cache[text].add(getWord(res,text))
 
 #main
 
@@ -95,6 +102,8 @@ while True:
     else:
         text = inp.strip().lower()
         
+    text = text.lower()
+    
     if text.isalnum():
         print("word: ")
 
@@ -110,10 +119,7 @@ while True:
         typer(word)
 
         if res is not None:
-            if text not in cache.keys():
-                cache[text] = set()
-            while res != []:
-                cache[text].add(getWord(res,text))
+            addCache(res, text)
 
         res = None
         
