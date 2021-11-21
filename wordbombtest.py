@@ -43,19 +43,14 @@ def getText():
         text = text.split("\n")[0]
         print(text)
         return text
+
 used = []
+cache = dict()
 
-def findWord(text):
+def getWord(res, text):
     global used
-    
-    link = r"https://wordfind.com/contains/" + text
-    page = requests.get(link)
-    soup = BeautifulSoup(page.content, 'html.parser')
-    word = ""
-    
-    res = soup.findAll("li", class_ = "dl")
 
-    
+    word = ""
     while word == "" or word in used:
         w = res.pop(0).find('a', href=True).contents[0]
 
@@ -63,9 +58,24 @@ def findWord(text):
             continue
 
         word = str(w)
+    return word
+
+
+def findWord(text):
+    global used
+    
+    link = r"https://wordfind.com/contains/" + text
+    page = requests.get(link)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    
+    
+    res = soup.findAll("li", class_ = "dl")
+
+    word = getWord(res, text)
+    
     used.append(word)
     
-    return word
+    return res, word
 
 
 
@@ -77,14 +87,6 @@ def typer(text):
          
 
 #main
-'''
-text = getText()
-
-if text.isalnum():
-    print("word: ")
-    print(findWord(text))
-'''
-
 
 while True:
     inp = input("scan?")
@@ -95,10 +97,24 @@ while True:
         
     if text.isalnum():
         print("word: ")
-        word = findWord(text)
+
+        if text not in cache.keys():
+            res, word = findWord(text)
+        else:
+            word = cache[text].pop()
+        
         print("\t", word)
         pyautogui.hotkey("alt","tab")
         time.sleep(0.4)
         print(used)
         typer(word)
+
+        if res is not None:
+            if text not in cache.keys():
+                cache[text] = set()
+            while res != []:
+                cache[text].add(getWord(res,text))
+
+        res = None
+        
     print()
